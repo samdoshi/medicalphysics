@@ -2,6 +2,7 @@
 #include <string.h>
 
 // asf
+#include "avr32_reset_cause.h"
 #include "compiler.h"
 #include "delay.h"
 #include "flashc.h"
@@ -44,8 +45,7 @@ const uint8_t kClockOut = B10;
 #define kNumClockTracking 8
 
 typedef struct {
-    uint8_t front_held_timer;
-    bool did_front_long_hold;
+    uint16_t front_held_timer;
     bool clock_phase;
     uint16_t clock_time;
     uint16_t clock_prev;
@@ -70,7 +70,6 @@ static inline void clear_grid_arc(void) {
 
 static hardware_state_t hw_state = {
     .front_held_timer = 0,
-    .did_front_long_hold = false,
     .clock_prev = UINT16_MAX  // out of ADC range to force tempo
 };
 
@@ -323,16 +322,16 @@ static void handler_PollADC(int32_t data) {
 }
 
 static void handler_Front(int32_t data) {
-    if (data) {
-        hw_state.front_held_timer = 15;
+    if (data) {  // button down
+        hw_state.front_held_timer = 1;
     }
-    else {
-        // if we've just done a long hold, don't do a short
-        if (hw_state.did_front_long_hold) {
-            hw_state.did_front_long_hold = false;
+    else {  // button up
+        if (hw_state.front_held_timer < 15) {
+            event_t e = { .type = kEventFrontShort, .data = 0 };
+            event_post(&e);
         }
         else {
-            event_t e = { .type = kEventFrontShort, .data = 0 };
+            event_t e = { .type = kEventFrontLong, .data = 0 };
             event_post(&e);
         }
         hw_state.front_held_timer = 0;
@@ -340,14 +339,12 @@ static void handler_Front(int32_t data) {
 }
 
 static void handler_KeyTimer(int32_t data) {
-    if (hw_state.front_held_timer == 1) {
-        event_t e = { .type = kEventFrontLong, .data = 0 };
-        event_post(&e);
-        hw_state.did_front_long_hold = true;
-        hw_state.front_held_timer = 0;
+    if (hw_state.front_held_timer >= 1) {
+        hw_state.front_held_timer++;
     }
-    else if (hw_state.front_held_timer > 1) {
-        hw_state.front_held_timer--;
+
+    if (hw_state.front_held_timer > 150) {
+        reset_do_soft_reset();
     }
 }
 

@@ -116,6 +116,7 @@ INC_PATH = \
        ../conf                                            \
        ../conf/trilogy                                    \
        avr32/boards                                       \
+       avr32/drivers/cpu                                  \
        avr32/drivers/cpu/cycle_counter                    \
        avr32/drivers/flashc                               \
        avr32/drivers/gpio                                 \

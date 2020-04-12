@@ -25,6 +25,8 @@ BraceWrapping:
 
 Cpp11BracedListStyle: false
 
+IncludeBlocks: Preserve
+
 MaxEmptyLinesToKeep: 2
 ---
 
