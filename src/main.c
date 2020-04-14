@@ -32,15 +32,18 @@
 #include "conf_board.h"
 
 #include "init_meadowphysics.h"
+
+#include "app.h"
+#include "hardware.h"
 #include "state.h"
 
 #define kNumOutputs 8
-const uint8_t kOutputs[kNumOutputs] = {
+const uint32_t kOutputs[kNumOutputs] = {
     B00, B01, B02, B03, B04, B05, B06, B07
 };
 
-const uint8_t kClockNormal = B09;
-const uint8_t kClockOut = B10;
+const uint32_t kClockNormal = B09;
+const uint32_t kClockOut = B10;
 
 #define kNumClockTracking 8
 
@@ -55,18 +58,50 @@ typedef struct {
     uint32_t last_sys_count;
 } hardware_state_t;
 
-// grid.h
+// hardware.h
 
-static inline void set_grid_dirty(void) {
+// 'static inline' in a header file?
+void hardware_set_trigger_output(uint8_t idx, bool val) {
+    if (idx >= kNumOutputs) return;
+
+    uint32_t pin = kOutputs[idx];
+
+    if (val) {
+        gpio_set_gpio_pin(pin);
+    }
+    else {
+        gpio_clr_gpio_pin(pin);
+    }
+}
+
+// 'static inline' in a header file?
+void hardware_set_clock_output(bool val) {
+    if (val) {
+        gpio_set_gpio_pin(kClockOut);
+    }
+    else {
+        gpio_clr_gpio_pin(kClockOut);
+    }
+}
+
+void grid_set_dirty(void) {
     monome_set_quadrant_flag(0);
     monome_set_quadrant_flag(1);
 }
 
-static inline void clear_grid_arc(void) {
-    for (uint16_t i = 0; i < MONOME_MAX_LED_BYTES; i++) {
-        monomeLedBuffer[i] = 0;
-    }
+void grid_arc_clear(void) {
+    memset(monomeLedBuffer, 0, MONOME_MAX_LED_BYTES);
 }
+
+void grid_set(uint8_t x, uint8_t y, uint8_t level) {
+    monome_led_set(x, y, level);
+}
+
+void grid_refresh() {
+    (*monome_refresh)();
+}
+
+// state
 
 static hardware_state_t hw_state = {
     .front_held_timer = 0,
@@ -153,84 +188,7 @@ static void save_clock_tracking(void) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// app.h
-
-void app_clock(bool phase);
-void app_reset(void);
-void app_refresh(void);
-
-////////////////////////////////////////////////////////////////////////////////
 // application code
-
-void app_clock(bool phase) {
-    if (phase) {
-        state_tick(&state);
-        state_ui_dirty(&state);
-
-        gpio_set_gpio_pin(kClockOut);
-
-        uint8_t step = state_clock(&state);
-        for (uint8_t row = 0; row < kNumRows; row++) {
-            if (patch_step_value(&state, row, step)) {
-                gpio_set_gpio_pin(kOutputs[row]);
-            }
-            else {
-                gpio_clr_gpio_pin(kOutputs[row]);
-            }
-        }
-    }
-    else {
-        gpio_clr_gpio_pin(kClockOut);
-        for (uint8_t i = 0; i < kNumOutputs; i++) {
-            gpio_clr_gpio_pin(kOutputs[i]);
-        }
-    }
-}
-
-void app_reset() {
-    state_clock_reset(&state);
-    state_ui_dirty(&state);
-}
-
-void app_refresh() {
-    const uint8_t kCheckerLed = 2;
-    const uint8_t kClockLed = 6;
-    const uint8_t kTriggerLed = 10;
-    const uint8_t kTriggerClockLed = 15;
-
-    clear_grid_arc();
-
-    uint8_t c = state_clock(&state);
-    for (uint8_t row = 0; row < kNumRows; row++) {
-        for (uint8_t step = 0; step < kNumSteps; step++) {
-            if (patch_step_value(&state, row, step)) {
-                if (step == c)
-                    monome_led_set(step, row, kTriggerClockLed);
-                else
-                    monome_led_set(step, row, kTriggerLed);
-            }
-            else if (step == c) {
-                monome_led_set(step, row, kClockLed);
-            }
-            else {
-                // draw checker board
-                if (((row / 4) % 2) && ((step / 4) % 2)) {
-                    monome_led_set(step, row, kCheckerLed);
-                }
-                if (!((row / 4) % 2) && !((step / 4) % 2)) {
-                    monome_led_set(step, row, kCheckerLed);
-                }
-            }
-        }
-    }
-
-    // set the grid as being dirty
-    set_grid_dirty();
-    // do the refresh
-    (*monome_refresh)();
-    // mark the ui as clean
-    state_ui_clean(&state);
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +213,7 @@ static softTimer_t monomeRefreshTimer = { .next = NULL, .prev = NULL };
 static void clockTimer_callback(void* o) {
     if (!hw_state.clock_external) {
         hw_state.clock_phase = !hw_state.clock_phase;
-        app_clock(hw_state.clock_phase);
+        app_clock(&state, hw_state.clock_phase);
     }
 }
 
@@ -304,7 +262,7 @@ static void handler_MonomePoll(int32_t data) {
     monome_read_serial();
 }
 static void handler_MonomeRefresh(int32_t data) {
-    app_refresh();
+    app_refresh(&state);
 }
 
 static void handler_PollADC(int32_t data) {
@@ -350,7 +308,7 @@ static void handler_KeyTimer(int32_t data) {
 
 static void handler_FrontShort(int32_t data) {
     debug_clock_tracking();
-    app_reset();
+    app_reset(&state);
 }
 
 static void handler_FrontLong(int32_t data) {
@@ -366,7 +324,7 @@ static void handler_ClockExt(int32_t data) {
         // TODO: this should be called directly from the interrupt handler
         save_clock_tracking();
     }
-    app_clock(data);
+    app_clock(&state, data);
 }
 
 static void handler_MonomeGridKey(int32_t data) {

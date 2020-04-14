@@ -1,6 +1,8 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
+#include <stdint.h>
+
 #define kNumSteps 16
 typedef struct {
     bool step[kNumSteps];
@@ -19,7 +21,7 @@ typedef struct {
     patch_t patch;
 } state_t;
 
-const uint8_t kClockStopped = UINT8_MAX;
+#define kClockStopped UINT8_MAX;
 
 static inline void patch_init(state_t* s) {
     for (uint8_t row = 0; row < kNumRows; row++) {
