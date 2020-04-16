@@ -33,6 +33,13 @@ void app_clock(state_t *s, bool phase) {
     }
 }
 
+void app_grid_press(state_t *s, uint8_t x, uint8_t y, uint8_t z) {
+    // bail on key up
+    if (z == 0) return;
+
+    patch_toggle_step(s, y, x);
+    state_ui_dirty(s);
+}
 
 void app_refresh(state_t *s) {
     const uint8_t kCheckerLed = 2;

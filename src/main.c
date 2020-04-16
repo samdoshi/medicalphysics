@@ -330,12 +330,7 @@ static void handler_ClockExt(int32_t data) {
 static void handler_MonomeGridKey(int32_t data) {
     uint8_t x, y, z;
     monome_grid_key_parse_event_data(data, &x, &y, &z);
-
-    // bail on key up
-    if (z == 0) return;
-
-    patch_toggle_step(&state, y, x);
-    state_ui_dirty(&state);
+    app_grid_press(&state, x, y, z);
 }
 
 static void mp_process_ii(uint8_t* d, uint8_t len) {}
