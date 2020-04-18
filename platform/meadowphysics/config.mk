@@ -61,9 +61,9 @@ TARGET = $(THIS).elf
 
 # List of C source files.
 CSRCS = \
-       ../src/main.c                                      \
-       ../src/init_meadowphysics.c                        \
-       ../src/app.c                                       \
+       ../meadowphysics/main.c                            \
+       ../meadowphysics/init_meadowphysics.c              \
+       ../meadowphysics/app.c                             \
        ../libavr32/src/adc.c                              \
        ../libavr32/src/events.c                           \
        ../libavr32/src/i2c.c                              \

@@ -16,6 +16,7 @@ def main():
         product = device.get('ID_MODEL_ID')
         if (device.action == 'add' and vendor == '03eb' and product == '2ff6'):
             subprocess.run([str(flash)])
+            print("Flsh completed")
 
 if __name__ == '__main__':
     try:
