@@ -1,6 +1,7 @@
 .DS_Store
 *.zip
 .envrc
+/platform/simulator/simulator
 
 # Object files
 *.o

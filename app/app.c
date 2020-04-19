@@ -74,7 +74,8 @@ void app_refresh(state_t *s) {
     }
 
     // set the grid as being dirty
-    grid_set_dirty();
+    grid_set_dirty(0);
+    grid_set_dirty(1);
     // do the refresh
     grid_refresh();
     // mark the ui as clean

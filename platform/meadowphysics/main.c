@@ -84,9 +84,8 @@ void hardware_set_clock_output(bool val) {
     }
 }
 
-void grid_set_dirty(void) {
-    monome_set_quadrant_flag(0);
-    monome_set_quadrant_flag(1);
+void grid_set_dirty(uint8_t quadrant) {
+    monome_set_quadrant_flag(quadrant);
 }
 
 void grid_arc_clear(void) {

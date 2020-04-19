@@ -15,6 +15,9 @@ bool quit_now = false;
 #define GRID_SIZE 16
 uint8_t grid[GRID_SIZE][GRID_SIZE] = { { 0 } };
 
+#define QUADRANTS 4
+bool quadrant_dirty[QUADRANTS] = { false };
+
 static monome_t *monome;
 static state_t state;
 
@@ -25,7 +28,10 @@ void hardware_set_trigger_output(uint8_t idx, bool val) {
     if (val) printf("T%d", idx);
 }
 
-void grid_set_dirty() {}
+void grid_set_dirty(uint8_t quadrant) {
+    if (quadrant >= QUADRANTS) return;
+    quadrant_dirty[quadrant] = true;
+}
 
 void grid_arc_clear(void) {
     memset(grid, 0, GRID_SIZE * GRID_SIZE);
@@ -38,6 +44,8 @@ void grid_set(uint8_t x, uint8_t y, uint8_t level) {
 
 void grid_refresh() {
     for (uint8_t q = 0; q < 4; q++) {
+        if (quadrant_dirty[q] == false) continue;
+
         uint8_t off_x = 0;
         uint8_t off_y = 0;
         switch (q) {
@@ -65,6 +73,7 @@ void grid_refresh() {
             }
         }
         monome_led_level_map(monome, off_x, off_y, data);
+        quadrant_dirty[q] = false;
     }
 }
 
