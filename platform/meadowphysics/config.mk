@@ -63,7 +63,7 @@ TARGET = $(THIS).elf
 CSRCS = \
        ../meadowphysics/main.c                            \
        ../meadowphysics/init_meadowphysics.c              \
-       ../meadowphysics/app.c                             \
+       $(addprefix ../../app/,$(APP_CSRCS))               \
        ../libavr32/src/adc.c                              \
        ../libavr32/src/events.c                           \
        ../libavr32/src/i2c.c                              \
@@ -107,9 +107,10 @@ ASSRCS = \
 
 # List of include paths.
 INC_PATH = \
-       ../../src                                          \
+       ../meadowphysics                                   \
+       ../../../app                                       \
        ../src                                             \
-       ../src/usb.                                        \
+       ../src/usb                                         \
        ../src/usb/ftdi                                    \
        ../src/usb/hid                                     \
        ../src/usb/midi                                    \

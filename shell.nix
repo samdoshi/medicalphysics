@@ -1,5 +1,18 @@
 { pkgs ? import <nixpkgs> {} }:
 let
+  libmonome = pkgs.stdenv.mkDerivation rec {
+    name = "libmonome";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "monome";
+      repo = "libmonome";
+      rev = "v1.4.2";
+      sha256 = "157ansswnq9i5y10mh4cfwn00hwdbgbmyzh4qnghcqvfs08jrsnd";
+    };
+
+    nativeBuildInputs = with pkgs; [ wafHook ];
+    buildInputs = with pkgs; [ liblo libudev ];
+  };
 
   avr32-toolchain = pkgs.stdenv.mkDerivation rec {
     name = "av32-toolchain";
@@ -26,5 +39,14 @@ let
 
 in
   pkgs.mkShell {
-    buildInputs = with pkgs; [ avr32-toolchain clang-tools dfu-programmer python uucp ];
+    buildInputs = with pkgs; [
+      avr32-toolchain
+      clang
+      clang-tools
+      dfu-programmer
+      libmonome
+      lldb
+      python
+      uucp
+    ];
   }

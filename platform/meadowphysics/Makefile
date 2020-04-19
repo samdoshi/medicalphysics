@@ -62,9 +62,9 @@
 
 # Include the common Makefile, which will also include the project specific
 # config.mk file.
+
+include ../../app/app.mk
+
 MAKEFILE_PATH = ../libavr32/asf/avr32/utils/make/Makefile.avr32.in
 include $(MAKEFILE_PATH)
-
-format:
-	find . -type f -name "*.c" -o -name "*.h" | xargs clang-format -style=file -i
 
