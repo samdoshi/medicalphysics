@@ -43,10 +43,12 @@ in
       avr32-toolchain
       clang
       clang-tools
+      csound
       dfu-programmer
       libmonome
       lldb
       python
+      unixtools.xxd
       uucp
     ];
   }

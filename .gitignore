@@ -2,6 +2,7 @@
 *.zip
 .envrc
 /platform/simulator/simulator
+/platform/simulator/*.xxd
 
 # Object files
 *.o
