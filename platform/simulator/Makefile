@@ -11,10 +11,14 @@ default: $(TARGET)
 all: default
 
 OBJECTS = $(patsubst %.c, %.o, $(addprefix ../../app/,$(APP_CSRCS))) simulator.o orchestras.o
-HEADERS = $(addprefix ../../app/,$(APP_CSRCS)) orchestras.h
+HEADERS = $(addprefix ../../app/,$(APP_HEADERS)) orchestras.h
 XXDS = simple_trigger.xxd
 
-%.o: %.c $(HEADERS) $(XXDS)
+orchestras.c: $(XXDS)
+
+*.o: $(HEADERS)
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 %.xxd: %.orc
