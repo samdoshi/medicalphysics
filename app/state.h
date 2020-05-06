@@ -1,8 +1,8 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define kNumSteps 16
 typedef struct {
