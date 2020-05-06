@@ -12,7 +12,7 @@ instr 1
   ifreq = cpspch(p4)
 
   ; envelopes
-  kampenv madsr 0.001, 0.1, 0.2, 1
+  kampenv madsr 0.001, 0.1, 0.2, 0.5
   kampenv = kampenv * iamp
   ; tone generators
   aout foscil kampenv, ifreq, 1, 1, 0, giSine

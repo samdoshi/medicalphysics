@@ -10,8 +10,8 @@ include ../../app/app.mk
 default: $(TARGET)
 all: default
 
-OBJECTS = $(patsubst %.c, %.o, $(addprefix ../../app/,$(APP_CSRCS))) simulator.o orchestras.o
-HEADERS = $(addprefix ../../app/,$(APP_HEADERS)) orchestras.h
+OBJECTS = $(patsubst %.c, %.o, $(addprefix ../../app/,$(APP_CSRCS))) simulator.o orchestras.o timers.o timespec.o
+HEADERS = $(addprefix ../../app/,$(APP_HEADERS)) orchestras.h timers.h timespec.h
 XXDS = simple_trigger.xxd
 
 orchestras.c: $(XXDS)

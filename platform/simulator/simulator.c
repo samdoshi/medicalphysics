@@ -10,6 +10,7 @@
 #include "hardware.h"
 #include "orchestras.h"
 #include "state.h"
+#include "timers.h"
 
 // flag to indicate that the simulator should quit (to help Csound quit)
 bool quit_now = false;
@@ -126,13 +127,18 @@ void handle_press(const monome_event_t *e, void *user_data) {
     app_grid_press(&state, x, y, z);
 }
 
-void set_quit_now() {
-    quit_now = true;
+void handle_clock() {
+    static bool clock = false;  // start clock low
+    app_clock(&state, clock);
+    clock = !clock;
 }
 
-void microsleep(uint ms) {
-    struct timespec req = { .tv_sec = 0, .tv_nsec = ms * 1000L };
-    nanosleep(&req, (struct timespec *)NULL);
+void handle_refresh() {
+    if (state_is_ui_dirty(&state)) app_refresh(&state);
+}
+
+void set_quit_now() {
+    quit_now = true;
 }
 
 void no_message_callback(CSOUND *cs, int attr, const char *format,
@@ -175,14 +181,15 @@ int main() {
 
     setbuf(stdout, NULL);
 
-    bool clock = true;
+    set_clock_callback(handle_clock);
+    set_clock_rate(120.0 * 8);
+    set_refresh_callback(handle_refresh);
+
     while (!quit_now) {
         while (monome_event_handle_next(monome)) {
         }
-        app_clock(&state, clock);
-        app_refresh(&state);
-        microsleep(50 * 1000);
-        clock = !clock;
+        struct timespec next = process_timers();
+        sleep_till_before(next);
     }
 
     monome_led_all(monome, 0);
