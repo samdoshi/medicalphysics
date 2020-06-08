@@ -2,22 +2,46 @@
 
 #include "hardware.h"
 
+#define kClockStopped UINT8_MAX;
 
-void app_reset(state_t *s) {
-    state_clock_reset(s);
-    state_ui_dirty(s);
+static void patch_init(state_t* s) {
+    for (uint8_t row = 0; row < kNumRows; row++) {
+        for (uint8_t step = 0; step < kNumSteps; step++) {
+            s->patch.rows[row].step[step] = false;
+        }
+    }
 }
 
-void app_clock(state_t *s, bool phase) {
+static void patch_toggle_step(state_t* s, uint8_t row, uint8_t step) {
+    if (row > kNumRows || step > kNumSteps) return;
+    s->patch.rows[row].step[step] = !s->patch.rows[row].step[step];
+}
+
+static bool patch_step_value(state_t* s, uint8_t row, uint8_t step) {
+    if (row > kNumRows || step > kNumSteps) return false;
+    return s->patch.rows[row].step[step];
+}
+
+void app_init(state_t* s) {
+    s->clock = kClockStopped;
+    s->ui_dirty = true;
+    patch_init(s);
+}
+
+void app_reset(state_t* s) {
+    s->clock = kClockStopped;
+    s->ui_dirty = true;
+}
+
+void app_clock(state_t* s, bool phase) {
     if (phase) {
-        state_tick(s);
-        state_ui_dirty(s);
+        s->clock = (s->clock + 1) % kNumSteps;  // advance clock (or reset to 0)
+        s->ui_dirty = true;
 
         hardware_set_clock_output(true);
 
-        uint8_t step = state_clock(s);
         for (uint8_t row = 0; row < kNumRows; row++) {
-            if (patch_step_value(s, row, step)) {
+            if (patch_step_value(s, row, s->clock)) {
                 hardware_set_trigger_output(row, true);
             }
             else {
@@ -33,15 +57,15 @@ void app_clock(state_t *s, bool phase) {
     }
 }
 
-void app_grid_press(state_t *s, uint8_t x, uint8_t y, uint8_t z) {
+void app_grid_press(state_t* s, uint8_t x, uint8_t y, uint8_t z) {
     // bail on key up
     if (z == 0) return;
 
     patch_toggle_step(s, y, x);
-    state_ui_dirty(s);
+    s->ui_dirty = true;
 }
 
-void app_refresh(state_t *s) {
+void app_refresh(state_t* s) {
     const uint8_t kCheckerLed = 2;
     const uint8_t kClockLed = 6;
     const uint8_t kTriggerLed = 10;
@@ -49,16 +73,15 @@ void app_refresh(state_t *s) {
 
     grid_arc_clear();
 
-    uint8_t c = state_clock(s);
     for (uint8_t row = 0; row < kNumRows; row++) {
         for (uint8_t step = 0; step < kNumSteps; step++) {
             if (patch_step_value(s, row, step)) {
-                if (step == c)
+                if (step == s->clock)
                     grid_set(step, row, kTriggerClockLed);
                 else
                     grid_set(step, row, kTriggerLed);
             }
-            else if (step == c) {
+            else if (step == s->clock) {
                 grid_set(step, row, kClockLed);
             }
             else {
@@ -79,5 +102,9 @@ void app_refresh(state_t *s) {
     // do the refresh
     grid_refresh();
     // mark the ui as clean
-    state_ui_clean(s);
+    s->ui_dirty = false;
+}
+
+bool app_grid_is_dirty(state_t* s) {
+    return s->ui_dirty;
 }

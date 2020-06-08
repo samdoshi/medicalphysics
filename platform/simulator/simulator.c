@@ -8,7 +8,6 @@
 #include "app.h"
 #include "csound.h"
 #include "hardware.h"
-#include "state.h"
 #include "timers.h"
 
 // flag to indicate that the simulator should quit (to help Csound quit)
@@ -107,7 +106,7 @@ static void handle_clock() {
 }
 
 static void handle_refresh() {
-    if (state_is_ui_dirty(&state)) app_refresh(&state);
+    if (app_grid_is_dirty(&state)) app_refresh(&state);
 }
 
 static void set_quit_now() {
@@ -115,6 +114,8 @@ static void set_quit_now() {
 }
 
 int main() {
+    app_init(&state);
+
     monome = monome_open("/dev/ttyUSB0");
     if (!monome) {
         printf("Connection failed\n");

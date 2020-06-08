@@ -35,7 +35,6 @@
 
 #include "app.h"
 #include "hardware.h"
-#include "state.h"
 
 #define kNumOutputs 8
 const uint32_t kOutputs[kNumOutputs] = {
@@ -233,7 +232,7 @@ static void monome_poll_timer_callback(void* obj) {
 }
 
 static void monome_refresh_timer_callback(void* obj) {
-    if (state_is_ui_dirty(&state)) {
+    if (app_grid_is_dirty(&state)) {
         event_t e = { .type = kEventMonomeRefresh, e.data = 0 };
         event_post(&e);
     }
@@ -417,7 +416,7 @@ int main(void) {
     empty_clock_tracking();
     hw_state.clock_external = !gpio_get_pin_value(kClockNormal);
 
-    state_init(&state);
+    app_init(&state);
     flash_read(&state);
 
     timer_add(&clockTimer, 120, &clockTimer_callback, NULL);
